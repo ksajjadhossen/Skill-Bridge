@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { Sun, Moon, Menu, X, UserPlus } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import UserProfileMenu from "./UserProfileMenu";
-import { getUserAvatar } from "@/utils/getAvatar"; // হেল্পার ফাংশন ইমপোর্ট
+import { getUserAvatar } from "@/utils/getAvatar";
 
 export default function Navbar() {
   const [darkMode, setDarkMode] = useState(false);
@@ -43,20 +43,25 @@ export default function Navbar() {
     }
   };
 
+  const userRole = (session?.user as any)?.role;
+  const showDashboard = userRole === "ORGANIZER" || userRole === "VOLUNTEER";
+
+  const getDashboardHref = () => {
+    if (userRole === "ORGANIZER") return "/dashboard/organizer";
+    if (userRole === "VOLUNTEER") return "/dashboard/volunteer";
+    return "/dashboard";
+  };
+
   const baseNavLinks = [
     { name: "Home", href: "/" },
     { name: "Explore Events", href: "/events" },
   ];
 
-  const userRole = session?.user?.role;
-  const showDashboard = userRole === "ORGANIZER" || userRole === "VOLUNTEER";
-
   const navLinks = [
     ...baseNavLinks,
-    ...(showDashboard ? [{ name: "Dashboard", href: "/dashboard" }] : []),
+    ...(showDashboard ? [{ name: "Dashboard", href: getDashboardHref() }] : []),
   ];
 
-  // ইউজারের সঠিক ছবি পাওয়ার জন্য
   const userAvatar = session?.user ? getUserAvatar(session.user) : null;
 
   return (
@@ -170,12 +175,12 @@ export default function Navbar() {
                 <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
                   {session.user.name || session.user.email}
                 </p>
-                {/* USER রোল হলে দেখাবে না, অন্য রোলগুলো দেখাবে */}
-                {session.user.role && session.user.role !== "USER" && (
-                  <p className="text-xs text-teal-600 dark:text-teal-400 font-semibold uppercase">
-                    {session.user.role}
-                  </p>
-                )}
+                {session.user.role &&
+                  (session.user.role as string) !== "USER" && (
+                    <p className="text-xs text-teal-600 dark:text-teal-400 font-semibold uppercase">
+                      {session.user.role as string}
+                    </p>
+                  )}
               </div>
             </div>
           )}
