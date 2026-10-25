@@ -3,7 +3,6 @@ import { prisma } from "@/lib/db";
 import ExploreEventsClient from "@/components/events/ExploreEventsClient";
 import { Loader2 } from "lucide-react";
 
-// ডাটা ফেচিংয়ের জন্য আলাদা একটি সেপারেট অ্যাসিনক্রোনাস কম্পোনেন্ট
 async function EventsFetcher() {
   const events = await prisma.event.findMany({
     where: { isPublished: true },
@@ -17,7 +16,7 @@ async function EventsFetcher() {
   const formattedEvents = events.map((ev) => ({
     id: ev.id,
     title: ev.title,
-    description: ev.description,
+    description: ev.description ?? "",
     category: ev.category,
     date: ev.date.toISOString().split("T")[0],
     location: ev.location,

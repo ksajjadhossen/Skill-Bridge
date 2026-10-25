@@ -84,7 +84,6 @@ export default function OrganizerDashboardClient({
     }
   };
 
-  // ইউজার ফিল্টার করার জন্য সার্চ লজিক
   const filteredUsers = platformUsers.filter(
     (u: any) =>
       u.name.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
@@ -224,7 +223,6 @@ export default function OrganizerDashboardClient({
         </div>
       </div>
 
-      {/* প্রিমিয়াম ইউজার ও রোল ম্যানেজমেন্ট সেকশন (সার্চ বার ও সুন্দর ডিজাইন সহ) */}
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200/80 dark:border-gray-800 shadow-xs p-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 pb-4 border-b border-gray-100 dark:border-gray-800">
           <div>
@@ -236,7 +234,6 @@ export default function OrganizerDashboardClient({
             </p>
           </div>
 
-          {/* প্রিমিয়াম সার্চ বার */}
           <div className="relative w-full md:w-72">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
               <Search className="w-4 h-4" />
@@ -271,12 +268,12 @@ export default function OrganizerDashboardClient({
                 className="py-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 group"
               >
                 <div className="flex items-center gap-3">
-                  {/* প্রিমিয়াম অ্যাভাটর (নামের প্রথম অক্ষর দিয়ে গ্লসি সার্কেল) */}
                   <div className="w-10 h-10 rounded-lg bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400 font-extrabold flex items-center justify-center text-sm border border-teal-200/50 dark:border-teal-800/50 shadow-2xs">
                     {u.name ? u.name.charAt(0).toUpperCase() : "U"}
                   </div>
                   <div>
                     <button
+                      type="button"
                       onClick={() => setSelectedUserForHistory(u)}
                       className="font-bold text-gray-900 dark:text-gray-100 text-xs hover:text-teal-600 dark:hover:text-teal-400 transition text-left cursor-pointer"
                     >
