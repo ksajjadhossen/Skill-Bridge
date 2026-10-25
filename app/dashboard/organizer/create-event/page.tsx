@@ -13,12 +13,12 @@ import {
   Trash2,
 } from "lucide-react";
 import AiEventFormAssistant from "@/components/dashboard/AiEventFormAssistant";
+import { createEventAction } from "@/app/actions/eventActions";
 
 export default function CreateEventPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
-  // Form States
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("Environment");
@@ -26,7 +26,6 @@ export default function CreateEventPage() {
   const [capacity, setCapacity] = useState(20);
   const [date, setDate] = useState("");
 
-  // AI Assistant apply handler
   const handleAiApply = (data: {
     title: string;
     description: string;
@@ -41,7 +40,6 @@ export default function CreateEventPage() {
     setCapacity(data.capacity);
   };
 
-  // Clear Form handler
   const handleClear = () => {
     setTitle("");
     setDescription("");
@@ -55,18 +53,26 @@ export default function CreateEventPage() {
     e.preventDefault();
     setLoading(true);
 
-    // TODO: Connect with your Prisma / Backend API to save event
-    console.log({ title, description, category, location, capacity, date });
+    const res = await createEventAction({
+      title,
+      description,
+      category,
+      location,
+      maxCapacity: capacity,
+      date,
+    });
 
-    setTimeout(() => {
-      setLoading(false);
+    setLoading(false);
+
+    if (res.success) {
       router.push("/dashboard/organizer");
-    }, 1000);
+    } else {
+      alert("Failed to create event. Please check inputs.");
+    }
   };
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
-      {/* Back Button */}
       <button
         onClick={() => router.back()}
         className="flex items-center gap-2 text-sm text-gray-500 hover:text-teal-600 dark:text-gray-400 dark:hover:text-teal-400 mb-6 transition cursor-pointer"
@@ -95,10 +101,8 @@ export default function CreateEventPage() {
         </button>
       </div>
 
-      {/* AI Event Assistant Component Integration */}
       <AiEventFormAssistant onApplyData={handleAiApply} />
 
-      {/* Event Form */}
       <form
         onSubmit={handleSubmit}
         className="bg-white dark:bg-gray-800 p-6 md:p-8 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-6"

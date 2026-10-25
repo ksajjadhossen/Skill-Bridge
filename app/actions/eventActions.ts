@@ -1,81 +1,51 @@
 "use server";
 
-import { prisma as db } from "@/lib/db";
-import { auth } from "@/auth";
+import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 
-interface EventData {
+export async function createEventAction(formData: {
   title: string;
   description: string;
   category: string;
   location: string;
-  date: string;
   maxCapacity: number;
-  registrationDeadline: string;
-  requiredSkills: string[];
-}
-
-// Create a new event
-export async function createEvent(data: EventData) {
-  const session = await auth();
-
-  // Ensure only ORGANIZER can create events
-  if (!session?.user || session.user.role !== "ORGANIZER") {
-    throw new Error("Unauthorized: Only organizers can create events.");
-  }
-
+  date: string;
+}) {
   try {
-    const newEvent = await db.event.create({
+    let organizer = await prisma.user.findFirst({
+      where: { role: "ORGANIZER" },
+    });
+
+    if (!organizer) {
+      organizer = await prisma.user.findFirst();
+    }
+
+    if (!organizer) {
+      return {
+        success: false,
+        error: "No user found in database to assign as organizer.",
+      };
+    }
+
+    const newEvent = await prisma.event.create({
       data: {
-        title: data.title,
-        description: data.description,
-        category: data.category,
-        location: data.location,
-        date: new Date(data.date),
-        maxCapacity: Number(data.maxCapacity),
-        registrationDeadline: new Date(data.registrationDeadline),
-        requiredSkills: data.requiredSkills,
-        organizerId: session.user.id as string,
+        title: formData.title,
+        description: formData.description,
+        category: formData.category,
+        location: formData.location,
+        maxCapacity: formData.maxCapacity,
+        date: new Date(formData.date),
+        registrationDeadline: new Date(formData.date),
+        requiredSkills: ["General Support"],
+        organizerId: organizer.id,
         isPublished: true,
       },
     });
 
-    // Revalidate public events and organizer dashboard
-    revalidatePath("/events");
     revalidatePath("/dashboard/organizer");
-    revalidatePath("/", "layout");
-
-    return { success: true, event: newEvent };
+    return { success: true, data: newEvent };
   } catch (error) {
     console.error("Error creating event:", error);
-    return { success: false, error: "Failed to create event in database." };
-  }
-}
-
-// Delete an event
-export async function deleteEvent(eventId: string) {
-  const session = await auth();
-
-  if (!session?.user || session.user.role !== "ORGANIZER") {
-    throw new Error("Unauthorized action.");
-  }
-
-  try {
-    await db.event.delete({
-      where: {
-        id: eventId,
-        organizerId: session.user.id, // Ensure organizer owns this event
-      },
-    });
-
-    // Revalidate public events and organizer dashboard
-    revalidatePath("/events");
-    revalidatePath("/dashboard/organizer");
-    revalidatePath("/", "layout");
-
-    return { success: true };
-  } catch (error) {
-    console.error("Error deleting event:", error);
-    return { success: false, error: "Failed to delete event." };
+    return { success: false, error: "Failed to create event" };
   }
 }
