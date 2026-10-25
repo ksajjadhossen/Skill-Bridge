@@ -1,7 +1,8 @@
+import { Suspense } from "react";
 import OrganizerDashboardClient from "@/components/dashboard/OrganizerDashboardClient";
 import { prisma } from "@/lib/db";
 
-export default async function OrganizerDashboardPage({
+async function OrganizerDashboardContent({
   searchParams,
 }: {
   searchParams: Promise<{ organizerId?: string }>;
@@ -111,5 +112,21 @@ export default async function OrganizerDashboardPage({
       eventsCategoryData={eventsCategoryData}
       capacityData={capacityData}
     />
+  );
+}
+
+export default function OrganizerDashboardPage(props: {
+  searchParams: Promise<{ organizerId?: string }>;
+}) {
+  return (
+    <Suspense
+      fallback={
+        <div className="p-8 text-center text-sm text-slate-500">
+          Loading Dashboard...
+        </div>
+      }
+    >
+      <OrganizerDashboardContent {...props} />
+    </Suspense>
   );
 }

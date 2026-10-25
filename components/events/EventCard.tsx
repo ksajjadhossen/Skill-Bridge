@@ -10,8 +10,10 @@ import {
   Ticket,
   Download,
   AlertCircle,
+  LogIn,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react"; // NextAuth client hook
 import toast from "react-hot-toast";
 import jsPDF from "jspdf";
 import { registerForEvent } from "@/app/actions/organizer";
@@ -32,10 +34,13 @@ interface EventCardProps {
 
 export default function EventCard({ event }: EventCardProps) {
   const router = useRouter();
+  const { data: session } = useSession(); // Get current login session
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isTicketOpen, setIsTicketOpen] = useState(false);
   const [isAlreadyRegisteredModal, setIsAlreadyRegisteredModal] =
     useState(false);
+  const [isLoginRequiredModal, setIsLoginRequiredModal] = useState(false); // Login warning modal
   const [agreed, setAgreed] = useState(false);
   const [selectedSkill, setSelectedSkill] = useState("General Support");
   const [loading, setLoading] = useState(false);
@@ -52,6 +57,13 @@ export default function EventCard({ event }: EventCardProps) {
 
   const handleOpenModal = (e: React.MouseEvent) => {
     e.stopPropagation();
+
+    // Check if user is logged in before allowing registration
+    if (!session || !session.user) {
+      setIsLoginRequiredModal(true);
+      return;
+    }
+
     if (isFull) {
       toast.error("This event is fully booked!");
       return;
@@ -75,6 +87,8 @@ export default function EventCard({ event }: EventCardProps) {
       setIsModalOpen(false);
       if (res.message.includes("already registered")) {
         setIsAlreadyRegisteredModal(true);
+      } else if (res.message.includes("log in")) {
+        setIsLoginRequiredModal(true);
       } else {
         toast.error(res.message);
       }
@@ -207,6 +221,41 @@ export default function EventCard({ event }: EventCardProps) {
           </button>
         </div>
       </div>
+
+      {/* Login Required Modal */}
+      {isLoginRequiredModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-xs p-4 animate-fadeIn">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-teal-500/30 text-center relative">
+            <div className="w-12 h-12 bg-teal-50 dark:bg-teal-950/60 text-teal-600 rounded-full flex items-center justify-center mx-auto mb-3 border border-teal-200 dark:border-teal-800">
+              <LogIn className="w-6 h-6" />
+            </div>
+            <h3 className="text-lg font-black text-slate-900 dark:text-slate-100 mb-1">
+              Login Required!
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
+              You need to log in to your account before registering for{" "}
+              <span className="font-bold text-slate-700 dark:text-slate-300">
+                {event.title}
+              </span>
+              .
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => router.push("/login")}
+                className="flex-1 py-2.5 bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold rounded-xl transition cursor-pointer shadow-md"
+              >
+                Log In Now
+              </button>
+              <button
+                onClick={() => setIsLoginRequiredModal(false)}
+                className="px-4 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-xl transition cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Terms & Conditions Modal */}
       {isModalOpen && (

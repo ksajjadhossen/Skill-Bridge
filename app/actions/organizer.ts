@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
-import { auth } from "@/auth"; // NextAuth v5 style auth import
+import { auth } from "@/auth";
 
 // Register volunteer for an event and save to database
 export async function registerForEvent(eventId: string, selectedSkill: string) {
@@ -13,7 +13,6 @@ export async function registerForEvent(eventId: string, selectedSkill: string) {
       return { success: false, message: "Please log in first to register!" };
     }
 
-    // Get user id from session or database email lookup
     const userEmail = session.user.email;
     const user = userEmail
       ? await prisma.user.findUnique({ where: { email: userEmail } })
@@ -90,5 +89,46 @@ export async function deleteEvent(eventId: string) {
   } catch (error) {
     console.error("Delete event error:", error);
     return { success: false, message: "Failed to delete event." };
+  }
+}
+
+// Update registration status
+export async function updateRegistrationStatus(
+  registrationId: string,
+  status: "REGISTERED" | "CONFIRMED" | "ATTENDED" | "CANCELLED",
+) {
+  try {
+    await prisma.eventRegistration.update({
+      where: { id: registrationId },
+      data: { status },
+    });
+
+    revalidatePath("/dashboard/organizer");
+    return {
+      success: true,
+      message: "Registration status updated successfully.",
+    };
+  } catch (error) {
+    console.error("Update status error:", error);
+    return { success: false, message: "Failed to update registration status." };
+  }
+}
+
+// Update user role
+export async function updateUserRole(
+  userId: string,
+  role: "ORGANIZER" | "VOLUNTEER" | "USER",
+) {
+  try {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { role },
+    });
+
+    revalidatePath("/dashboard/organizer");
+    return { success: true, message: "User role updated successfully." };
+  } catch (error) {
+    console.error("Update role error:", error);
+    return { success: false, message: "Failed to update user role." };
   }
 }
