@@ -9,6 +9,7 @@ import {
   FileText,
   Ticket,
   Download,
+  AlertCircle,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
@@ -33,12 +34,14 @@ export default function EventCard({ event }: EventCardProps) {
   const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isTicketOpen, setIsTicketOpen] = useState(false);
+  const [isAlreadyRegisteredModal, setIsAlreadyRegisteredModal] =
+    useState(false);
   const [agreed, setAgreed] = useState(false);
   const [selectedSkill, setSelectedSkill] = useState("General Support");
   const [loading, setLoading] = useState(false);
   const [ticketData, setTicketData] = useState<any>(null);
 
-  const [registeredCount, setRegisteredCount] = useState(event.registered ?? 0);
+  const registeredCount = event.registered ?? 0;
   const capacityCount = event.capacity ?? 1;
   const percentage = Math.min(
     Math.round((registeredCount / capacityCount) * 100),
@@ -65,17 +68,21 @@ export default function EventCard({ event }: EventCardProps) {
 
     setLoading(true);
 
-    // Call server action to save registration permanently in database
     const res = await registerForEvent(event.id, selectedSkill);
     setLoading(false);
 
     if (!res.success) {
-      toast.error(res.message);
+      setIsModalOpen(false);
+      if (res.message.includes("already registered")) {
+        setIsAlreadyRegisteredModal(true);
+      } else {
+        toast.error(res.message);
+      }
       return;
     }
 
-    setRegisteredCount((prev) => prev + 1);
     toast.success("Registration successful! Pass generated.");
+    router.refresh();
 
     setTicketData({
       ticketId: `SB-${Math.floor(100000 + Math.random() * 900000)}`,
@@ -201,6 +208,7 @@ export default function EventCard({ event }: EventCardProps) {
         </div>
       </div>
 
+      {/* Terms & Conditions Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-xs p-4 animate-fadeIn">
           <div className="bg-white dark:bg-slate-900 rounded-xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 max-h-[90vh] flex flex-col relative">
@@ -314,6 +322,34 @@ export default function EventCard({ event }: EventCardProps) {
         </div>
       )}
 
+      {/* Already Registered Modal */}
+      {isAlreadyRegisteredModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-xs p-4 animate-fadeIn">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-amber-500/30 text-center relative">
+            <div className="w-12 h-12 bg-amber-50 dark:bg-amber-950/60 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-3 border border-amber-200 dark:border-amber-800">
+              <AlertCircle className="w-6 h-6" />
+            </div>
+            <h3 className="text-lg font-black text-slate-900 dark:text-slate-100 mb-1">
+              Already Registered!
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
+              You have already taken a pass for{" "}
+              <span className="font-bold text-slate-700 dark:text-slate-300">
+                {event.title}
+              </span>
+              . You cannot register twice for the same event.
+            </p>
+            <button
+              onClick={() => setIsAlreadyRegisteredModal(false)}
+              className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white text-xs font-bold rounded-xl transition cursor-pointer shadow-md"
+            >
+              Got It
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Ticket Pass Modal */}
       {isTicketOpen && ticketData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-xs p-4 animate-fadeIn">
           <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-teal-500/30 relative overflow-hidden text-center">
