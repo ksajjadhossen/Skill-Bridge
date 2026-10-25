@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import EventCard from "@/components/events/EventCard";
-import { Loader2 } from "lucide-react";
+import { Loader2, Search } from "lucide-react";
 
 interface ExploreEventsClientProps {
   initialEvents: any[];
@@ -14,6 +14,7 @@ export default function ExploreEventsClient({
   categories,
 }: ExploreEventsClientProps) {
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [searchQuery, setSearchQuery] = useState("");
   const [isPending, startTransition] = useTransition();
 
   const handleCategoryChange = (cat: string) => {
@@ -22,10 +23,15 @@ export default function ExploreEventsClient({
     });
   };
 
-  const filteredEvents =
-    selectedCategory === "All"
-      ? initialEvents
-      : initialEvents.filter((ev) => ev.category === selectedCategory);
+  // ক্যাটাগরি এবং সার্চ কুয়েরি উভয় ফিল터 একসাথে কাজ করবে
+  const filteredEvents = initialEvents.filter((ev) => {
+    const matchesCategory =
+      selectedCategory === "All" || ev.category === selectedCategory;
+    const matchesSearch =
+      ev.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      ev.location.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -47,6 +53,29 @@ export default function ExploreEventsClient({
         )}
       </div>
 
+      {/* প্রিমিয়াম এবং আকর্ষণীয় সার্চ বার */}
+      <div className="mb-6 relative max-w-xl">
+        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+          <Search className="w-5 h-5" />
+        </div>
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search events by title or location..."
+          className="w-full pl-12 pr-4 py-3 bg-white/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-2xl text-xs font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 shadow-sm focus:outline-teal-500 backdrop-blur-md transition-all"
+        />
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery("")}
+            className="absolute inset-y-0 right-0 pr-4 flex items-center text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+          >
+            Clear
+          </button>
+        )}
+      </div>
+
+      {/* ক্যাটাগরি ফিল্টার ট্যাগস */}
       <div className="flex flex-wrap items-center gap-2 mb-8">
         {categories.map((cat) => (
           <button
@@ -64,6 +93,7 @@ export default function ExploreEventsClient({
         ))}
       </div>
 
+      {/* ইভেন্ট লিস্ট বা এম্পটি স্টেট */}
       {isPending ? (
         <div className="flex flex-col items-center justify-center py-20 gap-3">
           <Loader2 className="w-8 h-8 animate-spin text-teal-600" />
@@ -77,8 +107,7 @@ export default function ExploreEventsClient({
             No events found
           </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            There are no community events available under the &quot;
-            {selectedCategory}&quot; category right now.
+            No community events matched your search or category filter.
           </p>
         </div>
       ) : (
