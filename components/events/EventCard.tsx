@@ -13,6 +13,7 @@ import {
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import jsPDF from "jspdf";
+import { registerForEvent } from "@/app/actions/organizer";
 
 interface EventCardProps {
   event: {
@@ -64,23 +65,29 @@ export default function EventCard({ event }: EventCardProps) {
 
     setLoading(true);
 
-    setTimeout(() => {
-      setLoading(false);
-      setRegisteredCount((prev) => prev + 1);
-      toast.success("Registration successful! Pass generated.");
+    // Call server action to save registration permanently in database
+    const res = await registerForEvent(event.id, selectedSkill);
+    setLoading(false);
 
-      setTicketData({
-        ticketId: `SB-${Math.floor(100000 + Math.random() * 900000)}`,
-        title: event.title,
-        date: event.date,
-        location: event.location,
-        skill: selectedSkill,
-        organizer: event.organizerName || "Community Organizer",
-      });
+    if (!res.success) {
+      toast.error(res.message);
+      return;
+    }
 
-      setIsModalOpen(false);
-      setIsTicketOpen(true);
-    }, 1000);
+    setRegisteredCount((prev) => prev + 1);
+    toast.success("Registration successful! Pass generated.");
+
+    setTicketData({
+      ticketId: `SB-${Math.floor(100000 + Math.random() * 900000)}`,
+      title: event.title,
+      date: event.date,
+      location: event.location,
+      skill: selectedSkill,
+      organizer: event.organizerName || "Community Organizer",
+    });
+
+    setIsModalOpen(false);
+    setIsTicketOpen(true);
   };
 
   const handleDownloadPDF = () => {

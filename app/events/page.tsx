@@ -21,7 +21,7 @@ async function EventsFetcher() {
     date: ev.date.toISOString().split("T")[0],
     location: ev.location,
     capacity: ev.maxCapacity,
-    registered: ev.registrations.length,
+    registered: ev.registrations.length, // Database count
     organizerName: ev.organizer?.name || "Community Organizer",
   }));
 
