@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { Shield, Search } from "lucide-react";
-import { updateUserRole } from "@/app/actions/organizer";
 import UserRoleModal from "@/components/dashboard/UserRoleModal";
+import { updateUserRole } from "@/app/actions/userActions";
 
 interface HierarchyProps {
   initialUsers: any[];

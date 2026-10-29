@@ -2,133 +2,92 @@
 
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
-import { auth } from "@/auth";
 
-// Register volunteer for an event and save to database
-export async function registerForEvent(eventId: string, selectedSkill: string) {
+// Register for an event
+export async function registerForEvent(
+  eventId: string,
+  userId: string,
+  selectedSkill?: string,
+) {
   try {
-    const session = await auth();
-
-    if (!session || !session.user) {
-      return { success: false, message: "Please log in first to register!" };
-    }
-
-    const userEmail = session.user.email;
-    const user = userEmail
-      ? await prisma.user.findUnique({ where: { email: userEmail } })
-      : null;
-
-    // @ts-ignore
-    const userId = user?.id || session?.user?.id;
-
-    if (!userId) {
-      return {
-        success: false,
-        message: "User not found. Please log in again.",
-      };
-    }
-
-    const event = await prisma.event.findUnique({
-      where: { id: eventId },
-      include: { registrations: true },
-    });
-
-    if (!event) {
-      return { success: false, message: "Event not found." };
-    }
-
-    // Check capacity limit
-    if (event.registrations.length >= event.maxCapacity) {
-      return { success: false, message: "Event slots are fully booked!" };
-    }
-
-    // Check duplicate registration
-    const existingRegistration = await prisma.eventRegistration.findFirst({
+    const existing = await prisma.eventRegistration.findFirst({
       where: { eventId, userId },
     });
 
-    if (existingRegistration) {
-      return {
-        success: false,
-        message: "You are already registered for this event.",
-      };
+    if (existing) {
+      return { success: false, error: "Already registered for this event." };
     }
 
-    // Save registration permanently in PostgreSQL database
     await prisma.eventRegistration.create({
       data: {
         eventId,
         userId,
-        selectedSkill,
+        selectedSkill: selectedSkill || "General",
         status: "REGISTERED",
       },
     });
 
     revalidatePath("/events");
-    return { success: true, message: "Registration successful!" };
-  } catch (error) {
-    console.error("Registration error:", error);
-    return { success: false, message: "Something went wrong." };
-  }
-}
-
-// Delete an event
-export async function deleteEvent(eventId: string) {
-  try {
-    await prisma.eventRegistration.deleteMany({
-      where: { eventId },
-    });
-
-    await prisma.event.delete({
-      where: { id: eventId },
-    });
-
     revalidatePath("/dashboard/organizer");
-    revalidatePath("/events");
-    return { success: true, message: "Event deleted successfully." };
+    return { success: true };
   } catch (error) {
-    console.error("Delete event error:", error);
-    return { success: false, message: "Failed to delete event." };
+    console.error("Failed to register for event:", error);
+    return { success: false, error: "Failed to register for event." };
   }
 }
 
-// Update registration status
+// Update Volunteer Registration Status (Accept / Reject)
 export async function updateRegistrationStatus(
   registrationId: string,
-  status: "REGISTERED" | "CONFIRMED" | "ATTENDED" | "CANCELLED",
+  newStatus: "CONFIRMED" | "REJECTED",
 ) {
   try {
     await prisma.eventRegistration.update({
       where: { id: registrationId },
-      data: { status },
+      data: { status: newStatus },
     });
 
-    revalidatePath("/dashboard/organizer");
-    return {
-      success: true,
-      message: "Registration status updated successfully.",
-    };
+    revalidatePath("/dashboard/organizer/volunteers");
+    return { success: true };
   } catch (error) {
-    console.error("Update status error:", error);
-    return { success: false, message: "Failed to update registration status." };
+    console.error("Failed to update registration status:", error);
+    return { success: false, error: "Failed to update registration status" };
   }
 }
 
-// Update user role
-export async function updateUserRole(
-  userId: string,
-  role: "ORGANIZER" | "VOLUNTEER" | "USER",
-) {
+// Update User Role & Hierarchy
+export async function updateUserRole(userId: string, newRole: string) {
   try {
     await prisma.user.update({
       where: { id: userId },
-      data: { role },
+      data: { role: newRole },
     });
 
-    revalidatePath("/dashboard/organizer");
-    return { success: true, message: "User role updated successfully." };
+    revalidatePath("/dashboard/organizer/users");
+    return { success: true };
   } catch (error) {
-    console.error("Update role error:", error);
-    return { success: false, message: "Failed to update user role." };
+    console.error("Failed to update user role:", error);
+    return { success: false, error: "Failed to update user role" };
+  }
+}
+
+// Delete Event by Organizer (All Platform Events Control)
+export async function deleteEventByOrganizer(eventId: string) {
+  try {
+    // Delete associated registrations first to avoid foreign key constraints
+    await prisma.eventRegistration.deleteMany({
+      where: { eventId },
+    });
+
+    // Delete the event
+    await prisma.event.delete({
+      where: { id: eventId },
+    });
+
+    revalidatePath("/dashboard/organizer/events");
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to delete event:", error);
+    return { success: false, error: "Failed to delete event" };
   }
 }
