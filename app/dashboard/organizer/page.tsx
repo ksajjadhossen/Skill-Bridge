@@ -1,38 +1,12 @@
-import { Suspense } from "react";
-import OrganizerDashboardClient from "@/components/dashboard/OrganizerDashboardClient";
 import { prisma } from "@/lib/db";
+import OrganizerStats from "@/components/dashboard/OrganizerStats";
+import OrganizerAnalytics from "@/components/dashboard/OrganizerAnalytics";
+import Link from "next/link";
+import { Plus } from "lucide-react";
 
-async function OrganizerDashboardContent({
-  searchParams,
-}: {
-  searchParams: Promise<{ organizerId?: string }>;
-}) {
-  const resolvedParams = await searchParams;
-
-  let organizerId = resolvedParams.organizerId;
-
-  if (!organizerId) {
-    const firstOrganizer = await prisma.user.findFirst({
-      where: { role: "ORGANIZER" },
-    });
-    organizerId = firstOrganizer ? firstOrganizer.id : "default-organizer-id";
-  }
-
+export default async function OrganizerOverviewPage() {
   const events = await prisma.event.findMany({
-    where: { organizerId },
-    include: {
-      registrations: {
-        include: {
-          user: { select: { id: true, name: true, email: true } },
-        },
-      },
-    },
-    orderBy: { date: "desc" },
-  });
-
-  const platformUsers = await prisma.user.findMany({
-    select: { id: true, name: true, email: true, role: true },
-    orderBy: { createdAt: "desc" },
+    include: { registrations: true },
   });
 
   const totalEvents = events.length;
@@ -40,10 +14,11 @@ async function OrganizerDashboardContent({
     (e) => new Date(e.date) < new Date(),
   ).length;
 
-  const capacityData = events.map((e) => {
-    const registered = e.registrations.length;
-    return { name: e.title, registered, capacity: e.maxCapacity };
-  });
+  const capacityData = events.map((e) => ({
+    name: e.title,
+    registered: e.registrations.length,
+    capacity: e.maxCapacity,
+  }));
 
   const totalVolunteers = capacityData.reduce(
     (acc, curr) => acc + curr.registered,
@@ -63,40 +38,6 @@ async function OrganizerDashboardContent({
     count: categoryMap[name],
   }));
 
-  const formattedEvents = events.map((e) => ({
-    id: e.id,
-    title: e.title,
-    category: e.category,
-    capacity: e.maxCapacity,
-    registeredCount: e.registrations.length,
-    date: e.date.toISOString().split("T")[0],
-    organizerId: e.organizerId,
-    registrations: e.registrations.map((r) => ({
-      id: r.id,
-      user: r.user,
-      createdAt: r.registeredAt.toISOString().split("T")[0],
-      selectedSkill: r.selectedSkill,
-      status: r.status,
-    })),
-  }));
-
-  const formattedUsers = platformUsers.map((u) => {
-    const userEvents = events.filter((e) => e.organizerId === u.id);
-    return {
-      id: u.id,
-      name: u.name,
-      email: u.email,
-      role: u.role,
-      events: userEvents.map((e) => ({
-        id: e.id,
-        title: e.title,
-        date: e.date.toISOString().split("T")[0],
-        location: e.location,
-        category: e.category,
-      })),
-    };
-  });
-
   const stats = {
     totalEvents,
     totalVolunteers,
@@ -105,28 +46,35 @@ async function OrganizerDashboardContent({
   };
 
   return (
-    <OrganizerDashboardClient
-      initialEvents={formattedEvents}
-      initialUsers={formattedUsers}
-      stats={stats}
-      eventsCategoryData={eventsCategoryData}
-      capacityData={capacityData}
-    />
-  );
-}
-
-export default function OrganizerDashboardPage(props: {
-  searchParams: Promise<{ organizerId?: string }>;
-}) {
-  return (
-    <Suspense
-      fallback={
-        <div className="p-8 text-center text-sm text-slate-500">
-          Loading Dashboard...
+    <div className="space-y-8 w-full">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">
+            Dashboard / Overview
+          </p>
+          <h1 className="text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight mt-1">
+            Organizer Command Center
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
+            Monitor overall event capacity, analytics, and platform activities
+            in real-time.
+          </p>
         </div>
-      }
-    >
-      <OrganizerDashboardContent {...props} />
-    </Suspense>
+
+        <Link
+          href="/dashboard/organizer/create-event"
+          className="px-4 py-2.5 bg-linear-to-r from-teal-600 to-cyan-600 hover:from-teal-500 hover:to-cyan-500 text-white font-bold rounded-xl flex items-center gap-2 shadow-md shadow-teal-500/20 transition-all text-xs cursor-pointer"
+        >
+          <Plus className="w-4 h-4" /> Create New Event
+        </Link>
+      </div>
+
+      <OrganizerStats stats={stats} />
+
+      <OrganizerAnalytics
+        eventsCategoryData={eventsCategoryData}
+        capacityData={capacityData}
+      />
+    </div>
   );
 }
