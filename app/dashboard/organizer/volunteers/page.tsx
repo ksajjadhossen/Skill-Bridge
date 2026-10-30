@@ -1,97 +1,62 @@
 import { Suspense } from "react";
-import VolunteerDashboardClient from "@/components/dashboard/OrganizerDashboardClient";
 import { prisma } from "@/lib/db";
+import OrganizerVolunteersClient from "@/components/dashboard/OrganizerVolunteersClient";
 
-// Allow blocking route to prevent un-cached navigation warning in Next.js 16
-export const instant = false;
-
-async function VolunteerDashboardContent({
-  searchParams,
-}: {
-  searchParams: Promise<{ volunteerId?: string }>;
-}) {
-  const resolvedParams = await searchParams;
-
-  let volunteerId = resolvedParams.volunteerId;
-
-  if (!volunteerId) {
-    const firstVolunteer = await prisma.user.findFirst({
-      where: { role: "VOLUNTEER" },
-    });
-    volunteerId = firstVolunteer ? firstVolunteer.id : "default-volunteer-id";
-  }
-
+async function OrganizerVolunteersContent() {
   const registrations = await prisma.eventRegistration.findMany({
-    where: { userId: volunteerId },
     include: {
+      user: {
+        select: { id: true, name: true, email: true },
+      },
       event: {
-        include: {
-          organizer: { select: { name: true, email: true } },
-        },
+        select: { id: true, title: true, date: true, location: true },
       },
     },
     orderBy: { registeredAt: "desc" },
   });
 
-  const availableEvents = await prisma.event.findMany({
-    where: { isPublished: true, date: { gte: new Date() } },
-    orderBy: { date: "asc" },
-    take: 5,
-  });
-
-  const totalRegistered = registrations.length;
-  const confirmedEvents = registrations.filter(
-    (r) => r.status === "CONFIRMED",
-  ).length;
-  const pendingEvents = registrations.filter(
-    (r) => r.status === "REGISTERED",
-  ).length;
-
   const formattedRegistrations = registrations.map((r) => ({
     id: r.id,
-    eventId: r.event.id,
-    title: r.event.title,
-    category: r.event.category,
-    location: r.event.location,
-    date: r.event.date.toISOString().split("T")[0],
-    organizerName: r.event.organizer.name,
+    volunteerName: r.user.name || "Unknown Volunteer",
+    volunteerEmail: r.user.email ?? "",
+    eventTitle: r.event.title,
+    eventDate: r.event.date.toISOString().split("T")[0],
     selectedSkill: r.selectedSkill,
-    status: r.status,
+    status: r.status as string,
     registeredAt: r.registeredAt.toISOString().split("T")[0],
   }));
 
   const stats = {
-    totalRegistered,
-    confirmedEvents,
-    pendingEvents,
+    total: formattedRegistrations.length,
+    confirmed: formattedRegistrations.filter((r) => r.status === "CONFIRMED")
+      .length,
+    pending: formattedRegistrations.filter((r) => r.status === "REGISTERED")
+      .length,
   };
 
   return (
-    <VolunteerDashboardClient
+    <OrganizerVolunteersClient
       initialRegistrations={formattedRegistrations}
-      availableEvents={availableEvents}
       stats={stats}
     />
   );
 }
 
-export default function VolunteerDashboardPage(props: {
-  searchParams: Promise<{ volunteerId?: string }>;
-}) {
+export default function OrganizerVolunteersPage() {
   return (
     <Suspense
       fallback={
         <div className="flex items-center justify-center h-[70vh] w-full">
           <div className="flex flex-col items-center gap-3">
             <div className="w-8 h-8 border-4 border-teal-500/30 border-t-teal-600 rounded-full animate-spin" />
-            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-              Loading Volunteer Dashboard...
+            <p className="text-xs font-semibold text-slate-500">
+              Loading Volunteer Requests...
             </p>
           </div>
         </div>
       }
     >
-      <VolunteerDashboardContent {...props} />
+      <OrganizerVolunteersContent />
     </Suspense>
   );
 }

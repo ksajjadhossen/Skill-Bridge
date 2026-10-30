@@ -46,9 +46,9 @@ export default function Sidebar({ userRole }: SidebarProps) {
   const links = userRole === "ORGANIZER" ? organizerLinks : volunteerLinks;
 
   return (
-    <aside className="w-64 border-r border-slate-800 bg-slate-900/50 p-6 hidden md:block min-h-screen">
+    <aside className="w-64 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-6 hidden md:block min-h-screen transition-colors">
       <div className="mb-8">
-        <h2 className="text-sm font-black uppercase tracking-wider text-teal-400">
+        <h2 className="text-sm font-black uppercase tracking-wider text-teal-600 dark:text-teal-400">
           {userRole === "ORGANIZER" ? "Organizer Panel" : "Volunteer Panel"}
         </h2>
       </div>
@@ -65,7 +65,7 @@ export default function Sidebar({ userRole }: SidebarProps) {
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition ${
                 isActive
                   ? "bg-teal-600 text-white shadow-md shadow-teal-600/20"
-                  : "text-slate-400 hover:bg-teal-50/10 hover:text-teal-400"
+                  : "text-slate-600 dark:text-slate-400 hover:bg-teal-50 dark:hover:bg-teal-950/30 hover:text-teal-600 dark:hover:text-teal-400"
               }`}
             >
               <Icon size={16} />

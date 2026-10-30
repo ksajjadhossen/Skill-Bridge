@@ -10,7 +10,7 @@ export default async function DashboardLayout({
   const userRole = (session?.user as { role?: string })?.role || "VOLUNTEER";
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex">
       <Sidebar userRole={userRole as "ORGANIZER" | "VOLUNTEER"} />
       <main className="flex-1 p-6 md:p-10 overflow-y-auto">{children}</main>
     </div>
