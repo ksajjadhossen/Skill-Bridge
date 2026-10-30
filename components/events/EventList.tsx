@@ -7,12 +7,13 @@ import { Search } from "lucide-react";
 interface EventItem {
   id: string;
   title: string;
-  description: string;
+  description?: string;
   category: string;
   location: string;
   date: string;
   capacity: number;
-  maxCapacity?: number;
+  registered?: number;
+  organizerName?: string;
 }
 
 export default function EventList({ events }: { events: EventItem[] }) {
@@ -24,7 +25,9 @@ export default function EventList({ events }: { events: EventItem[] }) {
   const filteredEvents = events.filter((event) => {
     const matchesSearch =
       event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      event.description.toLowerCase().includes(searchQuery.toLowerCase());
+      (event.description?.toLowerCase() || "").includes(
+        searchQuery.toLowerCase(),
+      );
 
     const matchesTag = selectedTag === "All" || event.category === selectedTag;
 
