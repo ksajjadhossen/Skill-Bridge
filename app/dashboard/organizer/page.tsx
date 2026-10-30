@@ -3,34 +3,45 @@ import OrganizerStats from "@/components/dashboard/OrganizerStats";
 import OrganizerAnalytics from "@/components/dashboard/OrganizerAnalytics";
 import Link from "next/link";
 import { Plus } from "lucide-react";
+import { Event, EventRegistration } from "@prisma/client";
+
+type EventWithRegs = Event & {
+  registrations: EventRegistration[];
+};
 
 export default async function OrganizerOverviewPage() {
-  const events = await prisma.event.findMany({
+  const events: EventWithRegs[] = await prisma.event.findMany({
     include: { registrations: true },
   });
 
   const totalEvents = events.length;
   const completedEvents = events.filter(
-    (e) => new Date(e.date) < new Date(),
+    (e: EventWithRegs) => new Date(e.date) < new Date(),
   ).length;
 
-  const capacityData = events.map((e) => ({
+  const capacityData = events.map((e: EventWithRegs) => ({
     name: e.title,
     registered: e.registrations.length,
     capacity: e.maxCapacity,
   }));
 
   const totalVolunteers = capacityData.reduce(
-    (acc, curr) => acc + curr.registered,
+    (
+      acc: number,
+      curr: { name: string; registered: number; capacity: number },
+    ) => acc + curr.registered,
     0,
   );
   const availableSlots = capacityData.reduce(
-    (acc, curr) => acc + Math.max(0, curr.capacity - curr.registered),
+    (
+      acc: number,
+      curr: { name: string; registered: number; capacity: number },
+    ) => acc + Math.max(0, curr.capacity - curr.registered),
     0,
   );
 
   const categoryMap: { [key: string]: number } = {};
-  events.forEach((e) => {
+  events.forEach((e: EventWithRegs) => {
     categoryMap[e.category] = (categoryMap[e.category] || 0) + 1;
   });
   const eventsCategoryData = Object.keys(categoryMap).map((name) => ({

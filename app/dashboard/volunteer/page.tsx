@@ -34,7 +34,7 @@ async function VolunteerDashboardContent() {
     take: 5,
   });
 
-  const formattedRegistrations = registrations.map((r) => ({
+  const formattedRegistrations = registrations.map((r: any) => ({
     id: r.id,
     eventId: r.event.id,
     title: r.event.title,
@@ -49,9 +49,9 @@ async function VolunteerDashboardContent() {
 
   const stats = {
     totalRegistered: registrations.length,
-    confirmedEvents: registrations.filter((r) => r.status === "CONFIRMED")
+    confirmedEvents: registrations.filter((r: any) => r.status === "CONFIRMED")
       .length,
-    pendingEvents: registrations.filter((r) => r.status === "REGISTERED")
+    pendingEvents: registrations.filter((r: any) => r.status === "REGISTERED")
       .length,
   };
 

@@ -15,7 +15,7 @@ async function OrganizerVolunteersContent() {
     orderBy: { registeredAt: "desc" },
   });
 
-  const formattedRegistrations = registrations.map((r) => ({
+  const formattedRegistrations = registrations.map((r: any) => ({
     id: r.id,
     volunteerName: r.user.name || "Unknown Volunteer",
     volunteerEmail: r.user.email ?? "",
@@ -28,10 +28,12 @@ async function OrganizerVolunteersContent() {
 
   const stats = {
     total: formattedRegistrations.length,
-    confirmed: formattedRegistrations.filter((r) => r.status === "CONFIRMED")
-      .length,
-    pending: formattedRegistrations.filter((r) => r.status === "REGISTERED")
-      .length,
+    confirmed: formattedRegistrations.filter(
+      (r: any) => r.status === "CONFIRMED",
+    ).length,
+    pending: formattedRegistrations.filter(
+      (r: any) => r.status === "REGISTERED",
+    ).length,
   };
 
   return (

@@ -17,5 +17,4 @@ if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;
 }
 
-// Adding db export to fix the import error across the app
 export const db = prisma;
