@@ -9,6 +9,12 @@ type EventWithRegs = Event & {
   registrations: EventRegistration[];
 };
 
+interface CapacityItem {
+  name: string;
+  registered: number;
+  capacity: number;
+}
+
 export default async function OrganizerOverviewPage() {
   const events: EventWithRegs[] = await prisma.event.findMany({
     include: { registrations: true },
@@ -19,29 +25,24 @@ export default async function OrganizerOverviewPage() {
     (e: EventWithRegs) => new Date(e.date) < new Date(),
   ).length;
 
-  const capacityData = events.map((e: EventWithRegs) => ({
+  const capacityData: CapacityItem[] = events.map((e: EventWithRegs) => ({
     name: e.title,
     registered: e.registrations.length,
     capacity: e.maxCapacity,
   }));
 
   const totalVolunteers = capacityData.reduce(
-    (
-      acc: number,
-      curr: { name: string; registered: number; capacity: number },
-    ) => acc + curr.registered,
+    (acc: number, curr: CapacityItem) => acc + curr.registered,
     0,
   );
 
   const availableSlots = capacityData.reduce(
-    (
-      acc: number,
-      curr: { name: string; registered: number; capacity: number },
-    ) => acc + Math.max(0, curr.capacity - curr.registered),
+    (acc: number, curr: CapacityItem) =>
+      acc + Math.max(0, curr.capacity - curr.registered),
     0,
   );
 
-  const categoryMap: { [key: string]: number } = {};
+  const categoryMap: Record<string, number> = {};
   events.forEach((e: EventWithRegs) => {
     categoryMap[e.category] = (categoryMap[e.category] || 0) + 1;
   });

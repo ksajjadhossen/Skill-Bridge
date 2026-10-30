@@ -2,8 +2,26 @@ import { Suspense } from "react";
 import { prisma } from "@/lib/db";
 import OrganizerVolunteersClient from "@/components/dashboard/OrganizerVolunteersClient";
 
+interface RegistrationRelation {
+  id: string;
+  selectedSkill: string | null;
+  status: string;
+  registeredAt: Date;
+  user: {
+    id: string;
+    name: string | null;
+    email: string;
+  };
+  event: {
+    id: string;
+    title: string;
+    date: Date;
+    location: string;
+  };
+}
+
 async function OrganizerVolunteersContent() {
-  const registrations = await prisma.eventRegistration.findMany({
+  const registrations = (await prisma.eventRegistration.findMany({
     include: {
       user: {
         select: { id: true, name: true, email: true },
@@ -13,27 +31,25 @@ async function OrganizerVolunteersContent() {
       },
     },
     orderBy: { registeredAt: "desc" },
-  });
+  })) as unknown as RegistrationRelation[];
 
-  const formattedRegistrations = registrations.map((r: any) => ({
+  const formattedRegistrations = registrations.map((r) => ({
     id: r.id,
     volunteerName: r.user.name || "Unknown Volunteer",
     volunteerEmail: r.user.email ?? "",
     eventTitle: r.event.title,
     eventDate: r.event.date.toISOString().split("T")[0],
-    selectedSkill: r.selectedSkill,
-    status: r.status as string,
+    selectedSkill: r.selectedSkill || "General",
+    status: r.status,
     registeredAt: r.registeredAt.toISOString().split("T")[0],
   }));
 
   const stats = {
     total: formattedRegistrations.length,
-    confirmed: formattedRegistrations.filter(
-      (r: { status: string }) => r.status === "CONFIRMED",
-    ).length,
-    pending: formattedRegistrations.filter(
-      (r: { status: string }) => r.status === "REGISTERED",
-    ).length,
+    confirmed: formattedRegistrations.filter((r) => r.status === "CONFIRMED")
+      .length,
+    pending: formattedRegistrations.filter((r) => r.status === "REGISTERED")
+      .length,
   };
 
   return (

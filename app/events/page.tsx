@@ -3,39 +3,39 @@ import { prisma } from "@/lib/db";
 import ExploreEventsClient from "@/components/events/ExploreEventsClient";
 import { Loader2 } from "lucide-react";
 
+interface EventRelation {
+  id: string;
+  title: string;
+  description: string | null;
+  category: string;
+  date: Date;
+  location: string;
+  maxCapacity: number;
+  registrations: { id: string }[];
+  organizer: { name: string | null } | null;
+}
+
 async function EventsFetcher() {
-  const events = await prisma.event.findMany({
+  const events = (await prisma.event.findMany({
     where: { isPublished: true },
     include: {
       registrations: true,
       organizer: { select: { name: true } },
     },
     orderBy: { date: "asc" },
-  });
+  })) as unknown as EventRelation[];
 
-  const formattedEvents = events.map(
-    (ev: {
-      id: string;
-      title: string;
-      description: string | null;
-      category: string;
-      date: Date;
-      location: string;
-      maxCapacity: number;
-      registrations: any[];
-      organizer?: { name: string | null } | null;
-    }) => ({
-      id: ev.id,
-      title: ev.title,
-      description: ev.description ?? "",
-      category: ev.category,
-      date: ev.date.toISOString().split("T")[0],
-      location: ev.location,
-      capacity: ev.maxCapacity,
-      registered: ev.registrations.length, // Database count
-      organizerName: ev.organizer?.name || "Community Organizer",
-    }),
-  );
+  const formattedEvents = events.map((ev) => ({
+    id: ev.id,
+    title: ev.title,
+    description: ev.description ?? "",
+    category: ev.category,
+    date: ev.date.toISOString().split("T")[0],
+    location: ev.location,
+    capacity: ev.maxCapacity,
+    registered: ev.registrations.length,
+    organizerName: ev.organizer?.name || "Community Organizer",
+  }));
 
   const categories = [
     "All",

@@ -3,7 +3,23 @@ import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 import VolunteerDashboardClient from "@/components/dashboard/VolunteerDashboardClient";
 
-export const instant = false;
+interface VolunteerRegRelation {
+  id: string;
+  selectedSkill: string | null;
+  status: string;
+  registeredAt: Date;
+  event: {
+    id: string;
+    title: string;
+    category: string;
+    location: string;
+    date: Date;
+    organizer: {
+      name: string | null;
+      email: string;
+    };
+  };
+}
 
 async function VolunteerDashboardContent() {
   const session = await auth();
@@ -15,7 +31,7 @@ async function VolunteerDashboardContent() {
 
   const volunteerId = currentUser ? currentUser.id : "default-volunteer-id";
 
-  const registrations = await prisma.eventRegistration.findMany({
+  const registrations = (await prisma.eventRegistration.findMany({
     where: { userId: volunteerId },
     include: {
       event: {
@@ -25,7 +41,7 @@ async function VolunteerDashboardContent() {
       },
     },
     orderBy: { registeredAt: "desc" },
-  });
+  })) as unknown as VolunteerRegRelation[];
 
   const availableEvents = await prisma.event.findMany({
     where: { isPublished: true, date: { gte: new Date() } },
@@ -33,24 +49,24 @@ async function VolunteerDashboardContent() {
     take: 5,
   });
 
-  const formattedRegistrations = registrations.map((r: any) => ({
+  const formattedRegistrations = registrations.map((r) => ({
     id: r.id,
     eventId: r.event.id,
     title: r.event.title,
     category: r.event.category,
     location: r.event.location,
     date: r.event.date.toISOString().split("T")[0],
-    organizerName: r.event.organizer.name,
-    selectedSkill: r.selectedSkill,
+    organizerName: r.event.organizer.name || "Organizer",
+    selectedSkill: r.selectedSkill || "General",
     status: r.status,
     registeredAt: r.registeredAt.toISOString().split("T")[0],
   }));
 
   const stats = {
     totalRegistered: registrations.length,
-    confirmedEvents: registrations.filter((r: any) => r.status === "CONFIRMED")
+    confirmedEvents: registrations.filter((r) => r.status === "CONFIRMED")
       .length,
-    pendingEvents: registrations.filter((r: any) => r.status === "REGISTERED")
+    pendingEvents: registrations.filter((r) => r.status === "REGISTERED")
       .length,
   };
 

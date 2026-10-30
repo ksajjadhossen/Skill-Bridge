@@ -1,6 +1,6 @@
 "use server";
 
-import { db } from "@/lib/db";
+import { prisma as db } from "@/lib/db";
 import { hash } from "bcryptjs";
 
 export async function registerUser(formData: FormData) {
