@@ -27,7 +27,6 @@ async function VolunteerDashboardContent() {
     orderBy: { registeredAt: "desc" },
   });
 
-  // Fetch upcoming available events
   const availableEvents = await prisma.event.findMany({
     where: { isPublished: true, date: { gte: new Date() } },
     orderBy: { date: "asc" },
@@ -84,4 +83,3 @@ export default function VolunteerDashboardPage() {
     </div>
   );
 }
-``;
