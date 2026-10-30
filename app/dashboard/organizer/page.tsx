@@ -32,6 +32,7 @@ export default async function OrganizerOverviewPage() {
     ) => acc + curr.registered,
     0,
   );
+
   const availableSlots = capacityData.reduce(
     (
       acc: number,
@@ -44,6 +45,7 @@ export default async function OrganizerOverviewPage() {
   events.forEach((e: EventWithRegs) => {
     categoryMap[e.category] = (categoryMap[e.category] || 0) + 1;
   });
+
   const eventsCategoryData = Object.keys(categoryMap).map((name) => ({
     name,
     count: categoryMap[name],

@@ -29,10 +29,10 @@ async function OrganizerVolunteersContent() {
   const stats = {
     total: formattedRegistrations.length,
     confirmed: formattedRegistrations.filter(
-      (r: any) => r.status === "CONFIRMED",
+      (r: { status: string }) => r.status === "CONFIRMED",
     ).length,
     pending: formattedRegistrations.filter(
-      (r: any) => r.status === "REGISTERED",
+      (r: { status: string }) => r.status === "REGISTERED",
     ).length,
   };
 
