@@ -10,7 +10,9 @@ interface EventItem {
   description: string;
   category: string;
   location: string;
-  date: string | Date;
+  date: string;
+  capacity: number;
+  maxCapacity?: number;
 }
 
 export default function EventList({ events }: { events: EventItem[] }) {

@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
+import { RegistrationStatus, Role } from "@prisma/client";
 
 // Register for an event & Volunteer Request
 export async function registerForEvent(
@@ -42,7 +43,7 @@ export async function registerForEvent(
         eventId,
         userId: currentUser.id,
         selectedSkill: selectedSkill || "General Support",
-        status: "REGISTERED",
+        status: RegistrationStatus.REGISTERED,
       },
     });
 
@@ -65,7 +66,7 @@ export async function updateRegistrationStatus(
   try {
     await prisma.eventRegistration.update({
       where: { id: registrationId },
-      data: { status: newStatus },
+      data: { status: newStatus as RegistrationStatus },
     });
 
     revalidatePath("/dashboard/organizer/volunteers");
@@ -82,7 +83,7 @@ export async function updateUserRole(userId: string, newRole: string) {
   try {
     await prisma.user.update({
       where: { id: userId },
-      data: { role: newRole as any },
+      data: { role: newRole as Role },
     });
 
     revalidatePath("/dashboard/organizer/users");

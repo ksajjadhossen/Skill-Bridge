@@ -1,125 +1,62 @@
 "use client";
 
-import { useState } from "react";
-import { Shield, Search } from "lucide-react";
-import UserRoleModal from "@/components/dashboard/UserRoleModal";
-import { updateUserRole } from "@/app/actions/userActions";
+import { Role } from "@prisma/client";
 
-interface HierarchyProps {
-  initialUsers: any[];
+interface UserProfileEventsModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  user: {
+    id: string;
+    name: string | null;
+    email: string | null;
+    role: Role;
+  };
+  onRoleUpdate: (userId: string, newRole: string) => void;
 }
 
-export default function UserHierarchyManager({ initialUsers }: HierarchyProps) {
-  const [users, setUsers] = useState(initialUsers);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedUserForRole, setSelectedUserForRole] = useState<any | null>(
-    null,
-  );
-
-  // Sorting: ORGANIZER -> VOLUNTEER -> USER
-  const sortedUsers = [...users].sort((a, b) => {
-    const score = (role: string) => {
-      if (role === "ORGANIZER") return 3;
-      if (role === "VOLUNTEER") return 2;
-      return 1;
-    };
-    return score(b.role) - score(a.role);
-  });
-
-  const filteredUsers = sortedUsers.filter(
-    (u) =>
-      u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
-
-  const handleRoleUpdate = async (userId: string, newRole: string) => {
-    const res = await updateUserRole(userId, newRole);
-    if (res.success) {
-      setUsers((prev) =>
-        prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u)),
-      );
-      setSelectedUserForRole(null);
-    }
-  };
+export default function UserProfileEventsModal({
+  isOpen,
+  onClose,
+  user,
+  onRoleUpdate,
+}: UserProfileEventsModalProps) {
+  if (!isOpen) return null;
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs p-6 w-full">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
-        <div>
-          <h2 className="text-lg font-black text-slate-900 dark:text-slate-100">
-            Platform Users & Hierarchy
-          </h2>
-          <p className="text-xs text-slate-400 mt-1">
-            Organizers are listed first, followed by Volunteers and standard
-            Users.
-          </p>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl w-full max-w-md shadow-xl">
+        <h3 className="text-md font-black text-slate-900 dark:text-slate-100 mb-2">
+          Manage Role for {user.name || "User"}
+        </h3>
+        <p className="text-xs text-slate-400 mb-4">
+          Select a new permission role for this platform user.
+        </p>
+
+        <div className="space-y-2 mb-6">
+          {["ORGANIZER", "VOLUNTEER", "USER"].map((r) => (
+            <button
+              key={r}
+              onClick={() => onRoleUpdate(user.id, r)}
+              className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold transition border ${
+                user.role === r
+                  ? "bg-teal-600 text-white border-teal-600"
+                  : "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-teal-50 dark:hover:bg-slate-700"
+              }`}
+            >
+              {r}
+            </button>
+          ))}
         </div>
 
-        <div className="relative w-full md:w-72">
-          <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by name or email..."
-            className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-900 dark:text-slate-100 focus:outline-teal-500"
-          />
-        </div>
-      </div>
-
-      <div className="divide-y divide-slate-100 dark:divide-slate-800">
-        {filteredUsers.map((u: any) => (
-          <div
-            key={u.id}
-            className="py-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
+        <div className="flex justify-end gap-2">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold hover:bg-slate-300 transition"
           >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400 font-extrabold flex items-center justify-center text-sm border border-teal-200/50 dark:border-teal-800/50">
-                {u.name ? u.name.charAt(0).toUpperCase() : "U"}
-              </div>
-              <div>
-                <p className="font-bold text-slate-900 dark:text-slate-100 text-xs">
-                  {u.name || "Unnamed User"}
-                </p>
-                <p className="text-[11px] text-slate-400">{u.email}</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <span
-                className={`px-3 py-1 rounded-lg text-[10px] font-extrabold uppercase tracking-wider border ${
-                  u.role === "ORGANIZER"
-                    ? "bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800"
-                    : u.role === "VOLUNTEER"
-                      ? "bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400 border-teal-200 dark:border-teal-800"
-                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700"
-                }`}
-              >
-                {u.role}
-              </span>
-
-              {/* Manage Role Button opening the Modal */}
-              <button
-                onClick={() => setSelectedUserForRole(u)}
-                className="px-3.5 py-2 bg-slate-900 hover:bg-teal-600 dark:bg-slate-800 dark:hover:bg-teal-600 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 transition cursor-pointer shadow-xs"
-              >
-                <Shield size={14} />
-                Manage Role
-              </button>
-            </div>
-          </div>
-        ))}
+            Cancel
+          </button>
+        </div>
       </div>
-
-      {/* User Role Modal Component */}
-      {selectedUserForRole && (
-        <UserRoleModal
-          isOpen={!!selectedUserForRole}
-          onClose={() => setSelectedUserForRole(null)}
-          user={selectedUserForRole}
-          onRoleUpdate={handleRoleUpdate}
-        />
-      )}
     </div>
   );
 }
