@@ -1,130 +1,218 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import EventCard from "@/components/events/EventCard";
-import { Loader2, Search } from "lucide-react";
+import type { Dispatch, FormEvent, SetStateAction } from "react";
+import {
+  Calendar,
+  MapPin,
+  Users,
+  X,
+  Loader2,
+  CheckCircle2,
+} from "lucide-react";
+import type { EventItemType } from "./EventCard";
 
-export interface EventItemType {
-  id: string;
-  title: string;
-  description?: string;
-  category: string;
-  date: string;
-  location: string;
-  capacity: number;
-  registered?: number;
-  organizerName?: string;
+interface EventRegistrationModalProps {
+  event: EventItemType;
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (e: FormEvent<HTMLFormElement>) => void | Promise<void>;
+  selectedSkill: string;
+  setSelectedSkill: Dispatch<SetStateAction<string>>;
+  agreed: boolean;
+  setAgreed: Dispatch<SetStateAction<boolean>>;
+  isVolunteer: boolean;
+  setIsVolunteer: Dispatch<SetStateAction<boolean>>;
+  loading: boolean;
 }
 
-interface ExploreEventsClientProps {
-  initialEvents: EventItemType[];
-  categories: string[];
-}
+export default function EventRegistrationModal({
+  event,
+  isOpen,
+  onClose,
+  onSubmit,
+  selectedSkill,
+  setSelectedSkill,
+  agreed,
+  setAgreed,
+  isVolunteer,
+  setIsVolunteer,
+  loading,
+}: EventRegistrationModalProps) {
+  if (!isOpen) return null;
 
-export default function ExploreEventsClient({
-  initialEvents,
-  categories,
-}: ExploreEventsClientProps) {
-  const [selectedCategory, setSelectedCategory] = useState("All");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isPending, startTransition] = useTransition();
-
-  const handleCategoryChange = (cat: string) => {
-    startTransition(() => {
-      setSelectedCategory(cat);
-    });
-  };
-
-  const filteredEvents = initialEvents.filter((ev: EventItemType) => {
-    const matchesCategory =
-      selectedCategory === "All" || ev.category === selectedCategory;
-    const matchesSearch =
-      ev.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      ev.location.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
+  const skills = [
+    "General Support",
+    "Event Management",
+    "Technical Support",
+    "Communication",
+    "Design & Creativity",
+    "Photography",
+    "Content Writing",
+    "Other",
+  ];
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-black bg-linear-to-r from-teal-600 to-cyan-600 dark:from-teal-400 dark:to-cyan-400 bg-clip-text text-transparent">
-            Explore Community Events
-          </h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1 text-sm">
-            Join high-impact volunteer programs around you.
-          </p>
-        </div>
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-xs p-4 animate-fadeIn"
+      onClick={onClose}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="registration-modal-title"
+        className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-slate-900 p-6 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="absolute -top-20 -right-20 h-40 w-40 rounded-full bg-teal-500/10 blur-3xl pointer-events-none" />
 
-        {isPending && (
-          <div className="flex items-center gap-2 text-xs font-semibold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/30 px-3 py-1.5 rounded-xl">
-            <Loader2 className="w-4 h-4 animate-spin" />
-            Filtering events...
+        <div className="relative flex items-start justify-between gap-4 mb-6">
+          <div>
+            <span className="inline-block px-3 py-1 mb-3 rounded-md bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400 text-[10px] font-extrabold tracking-wider uppercase border border-teal-200/50 dark:border-teal-800/50">
+              Event Registration
+            </span>
+
+            <h2
+              id="registration-modal-title"
+              className="text-xl font-black text-slate-900 dark:text-slate-100"
+            >
+              Join Initiative
+            </h2>
+
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              Complete the form below to register for this event.
+            </p>
           </div>
-        )}
-      </div>
 
-      <div className="mb-6 relative max-w-xl">
-        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
-          <Search className="w-5 h-5" />
-        </div>
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search events by title or location..."
-          className="w-full pl-12 pr-4 py-3 bg-white/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-2xl text-xs font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 shadow-sm focus:outline-teal-500 backdrop-blur-md transition-all"
-        />
-        {searchQuery && (
           <button
-            onClick={() => setSearchQuery("")}
-            className="absolute inset-y-0 right-0 pr-4 flex items-center text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+            type="button"
+            onClick={onClose}
+            aria-label="Close modal"
+            className="shrink-0 rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white transition cursor-pointer"
           >
-            Clear
+            <X className="h-5 w-5" />
           </button>
-        )}
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2 mb-8">
-        {categories.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => handleCategoryChange(cat)}
-            disabled={isPending}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer disabled:opacity-50 ${
-              selectedCategory === cat
-                ? "bg-linear-to-r from-teal-600 to-cyan-600 text-white shadow-md shadow-teal-500/20"
-                : "bg-white/80 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-teal-50 dark:hover:bg-slate-800 border border-teal-100/50 dark:border-slate-700/50 backdrop-blur-md"
-            }`}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
-
-      {isPending ? (
-        <div className="flex flex-col items-center justify-center py-20 gap-3">
-          <Loader2 className="w-8 h-8 animate-spin text-teal-600" />
-          <p className="text-sm font-medium text-slate-500">
-            Loading events...
-          </p>
         </div>
-      ) : filteredEvents.length === 0 ? (
-        <div className="bg-white dark:bg-slate-800 rounded-3xl p-12 text-center border border-slate-100 dark:border-slate-700 shadow-sm">
-          <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-1">
-            No events found
+
+        <div className="relative mb-6 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 p-4">
+          <h3 className="mb-3 text-base font-bold text-slate-900 dark:text-slate-100">
+            {event.title}
           </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            No community events matched your search or category filter.
-          </p>
+
+          {event.description && (
+            <p className="mb-4 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+              {event.description}
+            </p>
+          )}
+
+          <div className="flex flex-col gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-teal-500" />
+              <span>{event.date}</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-cyan-500" />
+              <span>{event.location}</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-teal-500" />
+              <span>
+                {event.registered ?? 0} / {event.capacity} registered
+              </span>
+            </div>
+          </div>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredEvents.map((event: EventItemType) => (
-            <EventCard key={event.id} event={event} />
-          ))}
-        </div>
-      )}
+
+        <form onSubmit={onSubmit} className="relative space-y-5">
+          <div>
+            <label
+              htmlFor="selectedSkill"
+              className="mb-2 block text-xs font-bold text-slate-700 dark:text-slate-300"
+            >
+              Select Your Skill / Role
+            </label>
+
+            <select
+              id="selectedSkill"
+              value={selectedSkill}
+              onChange={(e) => setSelectedSkill(e.target.value)}
+              className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-3 text-sm text-slate-800 dark:text-slate-200 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
+            >
+              {skills.map((skill) => (
+                <option key={skill} value={skill}>
+                  {skill}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-4">
+            <label className="flex cursor-pointer items-start gap-3">
+              <input
+                type="checkbox"
+                checked={isVolunteer}
+                onChange={(e) => setIsVolunteer(e.target.checked)}
+                className="mt-0.5 h-4 w-4 accent-teal-600"
+              />
+
+              <span>
+                <span className="block text-sm font-bold text-slate-800 dark:text-slate-200">
+                  Register as a Volunteer
+                </span>
+                <span className="mt-1 block text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                  I want to participate and contribute as a volunteer.
+                </span>
+              </span>
+            </label>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-4">
+            <label className="flex cursor-pointer items-start gap-3">
+              <input
+                type="checkbox"
+                checked={agreed}
+                onChange={(e) => setAgreed(e.target.checked)}
+                className="mt-0.5 h-4 w-4 accent-teal-600"
+              />
+
+              <span className="text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+                I agree to the event rules and regulations. I confirm that the
+                information provided during registration is correct.
+              </span>
+            </label>
+          </div>
+
+          <div className="flex gap-3 pt-1">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={loading}
+              className="flex-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-4 py-3 text-xs font-bold text-slate-700 dark:text-slate-300 transition hover:bg-slate-200 dark:hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Cancel
+            </button>
+
+            <button
+              type="submit"
+              disabled={loading || !agreed}
+              className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-slate-900 dark:bg-teal-600 px-4 py-3 text-xs font-extrabold text-white shadow-md shadow-teal-500/20 transition hover:bg-teal-600 dark:hover:bg-teal-500 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Registering...
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="h-4 w-4" />
+                  Confirm Registration
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

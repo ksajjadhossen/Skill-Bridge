@@ -10,18 +10,20 @@ import { registerForEvent } from "@/app/actions/organizer";
 import EventRegistrationModal from "./EventRegistrationModal";
 import EventPassModal from "./EventPassModal";
 
+export interface EventItemType {
+  id: string;
+  title: string;
+  description?: string;
+  category: string;
+  date: string;
+  location: string;
+  capacity: number;
+  registered?: number;
+  organizerName?: string;
+}
+
 interface EventCardProps {
-  event: {
-    id: string;
-    title: string;
-    description?: string;
-    category: string;
-    date: string;
-    location: string;
-    capacity: number;
-    registered?: number;
-    organizerName?: string;
-  };
+  event: EventItemType;
 }
 
 export default function EventCard({ event }: EventCardProps) {
@@ -35,7 +37,7 @@ export default function EventCard({ event }: EventCardProps) {
   const [isLoginRequiredModal, setIsLoginRequiredModal] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [selectedSkill, setSelectedSkill] = useState("General Support");
-  const [isVolunteer, setIsVolunteer] = useState(true); // ভলান্টিয়ার রিকোয়েস্ট চেকবক্সের স্টেট
+  const [isVolunteer, setIsVolunteer] = useState(true);
   const [loading, setLoading] = useState(false);
   const [ticketData, setTicketData] = useState<any>(null);
 
@@ -68,7 +70,6 @@ export default function EventCard({ event }: EventCardProps) {
     }
 
     setLoading(true);
-    // এখানে isVolunteer স্টেটটি সার্ভার অ্যাকশনে পাস করা হলো
     const res = await registerForEvent(event.id, selectedSkill, isVolunteer);
     setLoading(false);
 

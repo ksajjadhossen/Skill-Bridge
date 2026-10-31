@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import EventCard from "@/components/events/EventCard";
+import EventCard, { EventItemType } from "@/components/events/EventCard";
 import { Loader2, Search } from "lucide-react";
 
 interface ExploreEventsClientProps {
-  initialEvents: any[];
+  initialEvents: EventItemType[];
   categories: string[];
 }
 
@@ -23,8 +23,7 @@ export default function ExploreEventsClient({
     });
   };
 
-  // ক্যাটাগরি এবং সার্চ কুয়েরি উভয় ফিল터 একসাথে কাজ করবে
-  const filteredEvents = initialEvents.filter((ev) => {
+  const filteredEvents = initialEvents.filter((ev: EventItemType) => {
     const matchesCategory =
       selectedCategory === "All" || ev.category === selectedCategory;
     const matchesSearch =
@@ -53,7 +52,6 @@ export default function ExploreEventsClient({
         )}
       </div>
 
-      {/* প্রিমিয়াম এবং আকর্ষণীয় সার্চ বার */}
       <div className="mb-6 relative max-w-xl">
         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
           <Search className="w-5 h-5" />
@@ -75,7 +73,6 @@ export default function ExploreEventsClient({
         )}
       </div>
 
-      {/* ক্যাটাগরি ফিল্টার ট্যাগস */}
       <div className="flex flex-wrap items-center gap-2 mb-8">
         {categories.map((cat) => (
           <button
@@ -93,7 +90,6 @@ export default function ExploreEventsClient({
         ))}
       </div>
 
-      {/* ইভেন্ট লিস্ট বা এম্পটি স্টেট */}
       {isPending ? (
         <div className="flex flex-col items-center justify-center py-20 gap-3">
           <Loader2 className="w-8 h-8 animate-spin text-teal-600" />
@@ -112,7 +108,7 @@ export default function ExploreEventsClient({
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredEvents.map((event) => (
+          {filteredEvents.map((event: EventItemType) => (
             <EventCard key={event.id} event={event} />
           ))}
         </div>
