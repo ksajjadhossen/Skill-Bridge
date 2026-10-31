@@ -49,18 +49,20 @@ async function VolunteerDashboardContent() {
     take: 5,
   });
 
-  const formattedRegistrations = registrations.map((r) => ({
-    id: r.id,
-    eventId: r.event.id,
-    title: r.event.title,
-    category: r.event.category,
-    location: r.event.location,
-    date: r.event.date.toISOString().split("T")[0],
-    organizerName: r.event.organizer.name || "Organizer",
-    selectedSkill: r.selectedSkill || "General",
-    status: r.status,
-    registeredAt: r.registeredAt.toISOString().split("T")[0],
-  }));
+  const formattedRegistrations = registrations.map(
+    (r: VolunteerRegRelation) => ({
+      id: r.id,
+      eventId: r.event.id,
+      title: r.event.title,
+      category: r.event.category,
+      location: r.event.location,
+      date: r.event.date.toISOString().split("T")[0],
+      organizerName: r.event.organizer.name || "Organizer",
+      selectedSkill: r.selectedSkill || "General",
+      status: r.status,
+      registeredAt: r.registeredAt.toISOString().split("T")[0],
+    }),
+  );
 
   const stats = {
     totalRegistered: registrations.length,
